@@ -1,0 +1,7 @@
+.git
+app/bin
+app/pkg
+**/*.log
+**/.env
+Dockerfile
+docker-compose.yml
