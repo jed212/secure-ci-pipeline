@@ -1,7 +1,7 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: Go
+name: Secure-ci-cd
 
 on:
   push:
@@ -28,7 +28,8 @@ jobs:
 
     - name: Build
       run: go build -v ./...
-
+      
+    # Run tests
     - name: Test
       run: go test -v ./...
 
@@ -37,10 +38,16 @@ jobs:
 
     - name: Check Formatting
       run: test -z "$(gofmt -l .)"
-
+      
+    # Run lint on the application
     - name: Lint
       uses: golangci/golangci-lint-action@v6
       with:
         version: v1.64.5
         skip-cache: true
         working-directory: ./secure-gitops-platform/app
+
+    # Run security Scans; Gitleaks to check for secrets, trivy for container image and dependency/filesystem scanning
+    - name: Run Gitleaks
+      uses: gitleaks/gitleaks-action@v2
+      
