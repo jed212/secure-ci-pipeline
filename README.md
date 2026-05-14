@@ -1,9 +1,138 @@
 # Secure-CI-CD-pipeline
-This repository contains a secure cloud-native CI/CD pipeline demonstrating DevSecOps practices such as SAST, container scanning, GitOps deployment, and Kubernetes security hardening.
+This project demonstrates a secure CI/CD pipeline implementation for a Go-based microservice, incorporating DevSecOps best practices such as automated testing, code quality enforcement, vulnerability scanning, and software supply chain visibility through SBOM generation.
 
-# Security Controls Implemented
-* Secret scanning with Gitleaks
-* SAST-style scanning with Trivy
-* Container vulnerability scanning (Trivy Image)
-* Code quality gates (golangci-lint)
-* SBOM generated and published
+## Project Overview
+
+This repository contains a simple Go web service and a fully automated CI pipeline designed to enforce security and quality at every stage of the software delivery lifecycle.
+
+The pipeline implements a shift-left security approach, ensuring vulnerabilities and misconfigurations are detected early in the development lifecycle.
+
+## Architecture
+```
+Developer Push
+      ↓
+GitHub Actions CI
+      ↓
+Code Build (Go)
+      ↓
+Unit Tests
+      ↓
+Code Quality Checks (golangci-lint, go vet, formatting)
+      ↓
+Secret Scanning (Gitleaks)
+      ↓
+Vulnerability Scanning (Trivy - filesystem)
+      ↓
+Docker Image Build
+      ↓
+Container Vulnerability Scan (Trivy)
+      ↓
+SBOM Generation (CycloneDX via Trivy)
+      ↓
+Artifact Publishing (SBOM)
+```
+## Tech Stack
+* Go (Backend service)
+* Docker (Containerization)
+* GitHub Actions (CI/CD)
+* Trivy (Security scanning + SBOM)
+* golangci-lint (Code quality)
+* Gitleaks (Secret detection)
+
+## Security Features Implemented
+✔ Code Quality Enforcement
+* golangci-lint
+* go vet
+* formatting checks
+
+✔ Secret Detection
+* Gitleaks used to prevent credential leakage in commits
+
+✔ Vulnerability Scanning
+* Trivy filesystem scan
+* Trivy container image scan
+* Blocking pipeline on HIGH and CRITICAL severity vulnerabilities
+
+✔ Software Supply Chain Security
+* SBOM (Software Bill of Materials) generation using Trivy (CycloneDX format)
+* SBOM published as CI artifact
+
+## CI/CD Pipeline Features
+* Automated build and test on every push
+* Security-first pipeline design
+* Fail-fast security gates
+* Artifact generation (SBOM)
+* Reproducible container builds
+
+## SBOM (Software Bill of Materials)
+
+The pipeline generates an SBOM in CycloneDX format, providing full visibility into:
+* application dependencies
+* transitive libraries
+* system packages inside container image
+  
+This enables:
+* vulnerability tracking
+* compliance readiness
+* supply chain transparency
+
+
+
+## Project Structure
+```
+secure-gitops-platform/
+├── app/
+│   ├── cmd/
+│   ├── internal/
+│   ├── go.mod
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
+├── Dockerfile
+├── sbom.json (generated in CI)
+└── README.md
+```
+## Running Locally
+To run application
+```
+cd app
+go run ./cmd/server
+```
+Run tests
+```
+go test ./...
+```
+
+Build Docker Image
+```
+docker build -t secure-go-api:1.0 .
+docker run -p 8080:8080 secure-go-api:1.0
+```
+
+## Key DevSecOps Principles Demonstrated
+* Shift-left security (security embedded in CI)
+* Automated policy enforcement
+* Secure software supply chain awareness
+* Immutable artifact generation
+* Continuous vulnerability detection
+
+# Roadmap
+
+Future enhancements:
+
+- [ ] Supply Chain Security
+* Cosign image signing
+* Artifact verification
+
+- [ ] GitOps Deployment
+* FluxCD integration
+* Kubernetes deployment automation
+
+- [ ] Policy Enforcement
+* Kubernetes security policies (OPA / Kyverno)
+* Admission control rules
+
+- [ ] Runtime Security
+* runtime monitoring (optional extension)
