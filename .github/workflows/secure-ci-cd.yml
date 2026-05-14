@@ -63,3 +63,4 @@ jobs:
     # Build image stage
     - name: Build Docker Image
       run: docker build -t secure-go-api:1.0 .
+      working-directory: ./secure-gitops-platform
