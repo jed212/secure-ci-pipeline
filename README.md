@@ -6,3 +6,4 @@ This repository contains a secure cloud-native CI/CD pipeline demonstrating DevS
 * SAST-style scanning with Trivy
 * Container vulnerability scanning (Trivy Image)
 * Code quality gates (golangci-lint)
+* SBOM generated and published
