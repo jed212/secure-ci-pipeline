@@ -31,3 +31,16 @@ jobs:
 
     - name: Test
       run: go test -v ./...
+
+    - name: Run Go vet
+      run: go vet ./...
+
+    - name: Check Formatting
+      run: test -z "$(gofmt -l .)"
+
+    - name: Install golangci-lint
+      run: |
+       curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s latest
+
+    - name: Run lint
+      run: ./bin/golangci-lint run ./...
