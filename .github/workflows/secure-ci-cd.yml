@@ -86,3 +86,12 @@ jobs:
       with:
         name: sbom
         path: sbom.json
+        
+    # Install Cosign
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@v3.3.3
+    
+    # Sign Image
+    - name: Sign Image
+      run: |
+        cosign sign --yes secure-go-api:1.0
