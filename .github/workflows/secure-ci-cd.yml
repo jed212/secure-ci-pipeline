@@ -3,6 +3,7 @@
 permissions:
   contents: read
   packages: write
+  id-token: write
 
 name: Secure-ci-cd
 
@@ -110,5 +111,7 @@ jobs:
     
     # Sign Image
     - name: Sign Image
+      env:
+        COSIGN_EXPERIMENTAL: "true"
       run: |
-          cosign sign --yes $IMAGE
+        cosign sign --yes $IMAGE
