@@ -47,7 +47,7 @@ jobs:
         skip-cache: true
         working-directory: ./secure-gitops-platform/app
 
-    # Run security Scans; Gitleaks to check for secrets, trivy for container image and dependency/filesystem scanning
+    # Run security Scans; Gitleaks to check for secrets, trivy for container image and dependency/ filesystem scanning
     - name: Run Gitleaks
       uses: gitleaks/gitleaks-action@v2
       
