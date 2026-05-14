@@ -43,3 +43,4 @@ jobs:
       with:
         version: v1.64.5
         skip-cache: true
+        working-directory: ./secure-gitops-platform/app
