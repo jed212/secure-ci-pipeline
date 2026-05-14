@@ -122,10 +122,6 @@ docker run -p 8080:8080 secure-go-api:1.0
 
 Future enhancements:
 
-- [ ] Supply Chain Security
-* Cosign image signing
-* Artifact verification
-
 - [ ] GitOps Deployment
 * FluxCD integration
 * Kubernetes deployment automation
