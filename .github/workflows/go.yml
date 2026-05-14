@@ -16,7 +16,7 @@ jobs:
 
     defaults:
       run:
-       working-directory: ./app
+       working-directory: ./secure-gitops-platform/app
        
     steps:
     - uses: actions/checkout@v4
