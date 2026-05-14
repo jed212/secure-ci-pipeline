@@ -1,2 +1,8 @@
 # Secure-CI-CD-pipeline
-A secure cloud-native CI/CD pipeline demonstrating DevSecOps practices such as SAST, container scanning, GitOps deployment, and Kubernetes security hardening.
+This repository contains a secure cloud-native CI/CD pipeline demonstrating DevSecOps practices such as SAST, container scanning, GitOps deployment, and Kubernetes security hardening.
+
+# Security Controls Implemented
+* Secret scanning with Gitleaks
+* SAST-style scanning with Trivy
+* Container vulnerability scanning (Trivy Image)
+* Code quality gates (golangci-lint)
