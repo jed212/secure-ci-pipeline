@@ -1,5 +1,5 @@
-# Secure-CI-CD-pipeline
-This project demonstrates a secure CI/CD pipeline implementation for a Go-based microservice, incorporating DevSecOps best practices such as automated testing, code quality enforcement, vulnerability scanning, and software supply chain visibility through SBOM generation.
+# Secure-CI-pipeline
+This project demonstrates a secure CI pipeline implementation for a Go-based microservice, incorporating DevSecOps best practices such as automated testing, code quality enforcement, vulnerability scanning, and Software Supply Chain visibility through SBOM generation.
 
 ## Project Overview
 
@@ -34,10 +34,11 @@ Artifact Publishing (SBOM)
 ## Tech Stack
 * Go (Backend service)
 * Docker (Containerization)
-* GitHub Actions (CI/CD)
+* GitHub Actions 
 * Trivy (Security scanning + SBOM)
 * golangci-lint (Code quality)
 * Gitleaks (Secret detection)
+* Cosign with sigstore(Image signing)
 
 ## Security Features Implemented
 ✔ Code Quality Enforcement
@@ -57,7 +58,7 @@ Artifact Publishing (SBOM)
 * SBOM (Software Bill of Materials) generation using Trivy (CycloneDX format)
 * SBOM published as CI artifact
 
-## CI/CD Pipeline Features
+## CI Pipeline Features
 * Automated build and test on every push
 * Security-first pipeline design
 * Fail-fast security gates
@@ -120,15 +121,23 @@ docker run -p 8080:8080 secure-go-api:1.0
 
 # Roadmap
 
-Future enhancements:
+This project currently focuses on implementing a secure CI and software supply chain workflow around a lightweight Go service.
 
-- [ ] GitOps Deployment
-* FluxCD integration
-* Kubernetes deployment automation
+A natural progression from this setup would be extending these security practices into deployment and runtime environments through GitOps and Kubernetes-native policy enforcement.
 
-- [ ] Policy Enforcement
-* Kubernetes security policies (OPA / Kyverno)
-* Admission control rules
+## Possible Next Steps
+GitOps & Secure CD
 
-- [ ] Runtime Security
-* runtime monitoring (optional extension)
+* Explore FluxCD-based GitOps deployments
+* Separate CI and CD concerns using a dedicated GitOps repository
+* Automate Kubernetes deployment synchronization from Git
+
+Kubernetes Policy Enforcement
+
+* Explore policy enforcement using Kyverno or Open Policy Agent
+* Experiment with trusted image verification and admission control policies
+
+Runtime Security Exploration
+
+* Explore Kubernetes runtime and workload security concepts
+* Extend supply chain security controls beyond CI into deployment environments
