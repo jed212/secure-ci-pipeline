@@ -116,17 +116,52 @@ jobs:
       run: |
         cosign sign --yes $IMAGE
 
-    - name: Update GitOps repo with new image
+    # - name: Update GitOps repo with new image
+    #   run: |
+    #     git clone https://github.com/jed212/gitops-lab.git
+    #     cd gitops-lab/apps
+    
+    #     # update image in deployment file
+    #     sed -i "s|image: .*|image: $IMAGE|" secure-go-api/deployment.yaml
+    
+    #     git config user.name "github-actions"
+    #     git config user.email "github-actions@github.com"
+    
+    #     git add .
+    #     git commit -m "Update image to $IMAGE"
+    #     git push
+
+    # Use ssh instead of http
+    - name: Setup SSH
       run: |
-        git clone https://github.com/jed212/gitops-lab.git
-        cd gitops-lab/apps
+        mkdir -p ~/.ssh
+        echo "${{ secrets.GITOPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+    # Update GitOps repo with new image
+    - name: Update GitOps Repo (CD Trigger)
+      env:
+        IMAGE: ${{ env.IMAGE }}
+        GITOPS_REPO: git@github.com:jed212/gitops-lab.git
+      run: |
+        set -e
     
-        # update image in deployment file
-        sed -i "s|image: .*|image: $IMAGE|" secure-go-api/deployment.yaml
+        echo "Cloning GitOps repo..."
+        git clone $GITOPS_REPO gitops
     
+        cd gitops
+    
+        echo "Updating image in deployment..."
+        sed -i "s|image: .*|image: $IMAGE|" apps/secure-go-api/deployment.yaml
+    
+        echo "Configuring git..."
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
     
+        echo "Committing changes..."
         git add .
-        git commit -m "Update image to $IMAGE"
+        git commit -m "Update image to $IMAGE" || echo "No changes to commit"
+    
+        echo "Pushing changes..."
         git push
