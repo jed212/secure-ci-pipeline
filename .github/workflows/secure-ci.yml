@@ -99,22 +99,22 @@ jobs:
     - name: Push Image
       run: docker push ghcr.io/${{ github.repository }}/secure-go-api:1.0
 
-    # Get the image digest and use to sign image
-    - name: Get Image Digest
-      run: |
-        DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/${{ github.repository }}/secure-go-api:1.0)
-        echo "IMAGE=$DIGEST" >> $GITHUB_ENV
+    # # Get the image digest and use to sign image
+    # - name: Get Image Digest
+    #   run: |
+    #     DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/${{ github.repository }}/secure-go-api:1.0)
+    #     echo "IMAGE=$DIGEST" >> $GITHUB_ENV
         
-    # Install Cosign
-    - name: Install Cosign
-      uses: sigstore/cosign-installer@v4.1.1
+    # # Install Cosign
+    # - name: Install Cosign
+    #   uses: sigstore/cosign-installer@v4.1.1
     
-    # Sign Image
-    - name: Sign Image
-      env:
-        COSIGN_EXPERIMENTAL: "true"
-      run: |
-        cosign sign --yes $IMAGE
+    # # Sign Image
+    # - name: Sign Image
+    #   env:
+    #     COSIGN_EXPERIMENTAL: "true"
+    #   run: |
+    #     cosign sign --yes $IMAGE
 
     # - name: Update GitOps repo with new image
     #   run: |
