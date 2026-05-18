@@ -142,7 +142,7 @@ jobs:
     # Update GitOps repo with new image
     - name: Update GitOps Repo (CD Trigger)
       env:
-        IMAGE: ${{ env.IMAGE }}
+        IMAGE: ghcr.io/${{ github.repository }}/secure-go-api:1.0
         GITOPS_REPO: git@github.com:jed212/gitops-lab.git
       run: |
         set -e
