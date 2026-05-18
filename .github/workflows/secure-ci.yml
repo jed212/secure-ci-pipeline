@@ -118,11 +118,11 @@ jobs:
 
     - name: Update GitOps repo with new image
       run: |
-        git clone https://github.com/jed212/secure-gitops-repo.git
-        cd secure-gitops-repo
+        git clone https://github.com/jed212/gitops-lab.git
+        cd gitops-lab/apps
     
         # update image in deployment file
-        sed -i "s|image: .*|image: $IMAGE|" apps/secure-go-api/deployment.yaml
+        sed -i "s|image: .*|image: $IMAGE|" secure-go-api/deployment.yaml
     
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
