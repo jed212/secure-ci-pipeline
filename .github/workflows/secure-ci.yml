@@ -88,7 +88,7 @@ jobs:
     - name: Trivy Image Scan
       uses: aquasecurity/trivy-action@0.35.0
       with:
-        image-ref: $IMAGE_NAME
+        image-ref: ${{ env.IMAGE_NAME }}
         severity: 'CRITICAL,HIGH'
         exit-code: '1'
 
@@ -96,7 +96,7 @@ jobs:
     - name: Generate SBOM
       uses: aquasecurity/trivy-action@0.35.0
       with:
-        image-ref: $IMAGE_NAME
+        image-ref: ${{ env.IMAGE_NAME }}
         format: 'cyclonedx'
         output: 'sbom.json'
 
@@ -108,7 +108,7 @@ jobs:
         
     # Push to ghcr
     - name: Push Image
-      run: docker push $IMAGE_NAME
+      run: docker push ${{ env.IMAGE_NAME }}
       working-directory: .
 
     # # Get the image digest and use to sign image
