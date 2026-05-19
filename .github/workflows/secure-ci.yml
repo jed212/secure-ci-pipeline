@@ -116,22 +116,7 @@ jobs:
     #     COSIGN_EXPERIMENTAL: "true"
     #   run: |
     #     cosign sign --yes $IMAGE
-
-    # - name: Update GitOps repo with new image
-    #   run: |
-    #     git clone https://github.com/jed212/gitops-lab.git
-    #     cd gitops-lab/apps
     
-    #     # update image in deployment file
-    #     sed -i "s|image: .*|image: $IMAGE|" secure-go-api/deployment.yaml
-    
-    #     git config user.name "github-actions"
-    #     git config user.email "github-actions@github.com"
-    
-    #     git add .
-    #     git commit -m "Update image to $IMAGE"
-    #     git push
-
     # Use ssh instead of https (to be optimized later)
     - name: Setup SSH
       run: |
