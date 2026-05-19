@@ -69,15 +69,26 @@ jobs:
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
         
     # Build image stage
+    - name: Generate Image Tag
+      run: |
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        TIMESTAMP=$(date +%Y%m%d%H%M%S)
+    
+        IMAGE_TAG="${SHORT_SHA}-${TIMESTAMP}"
+    
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+        echo "IMAGE_NAME=ghcr.io/jed212/secure-go-api:$IMAGE_TAG" >> $GITHUB_ENV
+        
     - name: Build Docker Image
-      run: docker build -t ghcr.io/${{ github.repository }}/secure-go-api:1.0 .
+      run: docker build -t $IMAGE_NAME .
       working-directory: .
+
 
     # Docker Image scan configured to fail for Critical and High severity vulnerabilities
     - name: Trivy Image Scan
       uses: aquasecurity/trivy-action@0.35.0
       with:
-        image-ref: 'ghcr.io/${{ github.repository }}/secure-go-api:1.0'
+        image-ref: $IMAGE_NAME
         severity: 'CRITICAL,HIGH'
         exit-code: '1'
 
@@ -85,7 +96,7 @@ jobs:
     - name: Generate SBOM
       uses: aquasecurity/trivy-action@0.35.0
       with:
-        image-ref: 'ghcr.io/${{ github.repository }}/secure-go-api:1.0'
+        image-ref: $IMAGE_NAME
         format: 'cyclonedx'
         output: 'sbom.json'
 
@@ -97,7 +108,7 @@ jobs:
         
     # Push to ghcr
     - name: Push Image
-      run: docker push ghcr.io/${{ github.repository }}/secure-go-api:1.0
+      run: docker push $IMAGE_NAME
       working-directory: .
 
     # # Get the image digest and use to sign image
@@ -115,7 +126,7 @@ jobs:
     #   env:
     #     COSIGN_EXPERIMENTAL: "true"
     #   run: |
-    #     cosign sign --yes $IMAGE
+    #     cosign sign --yes $IMAGE_NAME
     
     # Use ssh instead of https (to be optimized later)
     - name: Setup SSH
@@ -128,7 +139,7 @@ jobs:
     # Update GitOps repo with new image
     - name: Update GitOps Repo (CD Trigger)
       env:
-        IMAGE: ghcr.io/${{ github.repository }}/secure-go-api:1.0
+        IMAGE: ${{ env.IMAGE_NAME }}
         GITOPS_REPO: git@github.com:jed212/gitops-lab.git
       working-directory: .
       run: |
