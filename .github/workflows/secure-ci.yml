@@ -71,6 +71,7 @@ jobs:
     # Build image stage
     - name: Build Docker Image
       run: docker build -t ghcr.io/${{ github.repository }}/secure-go-api:1.0 .
+      working-directory: .
 
     # Docker Image scan configured to fail for Critical and High severity vulnerabilities
     - name: Trivy Image Scan
@@ -97,6 +98,7 @@ jobs:
     # Push to ghcr
     - name: Push Image
       run: docker push ghcr.io/${{ github.repository }}/secure-go-api:1.0
+      working-directory: .
 
     # # Get the image digest and use to sign image
     # - name: Get Image Digest
@@ -143,6 +145,7 @@ jobs:
       env:
         IMAGE: ghcr.io/${{ github.repository }}/secure-go-api:1.0
         GITOPS_REPO: git@github.com:jed212/gitops-lab.git
+      working-directory: .
       run: |
         set -e
     
