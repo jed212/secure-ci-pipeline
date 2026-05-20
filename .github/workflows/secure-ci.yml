@@ -1,11 +1,10 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+name: Secure CI/CD Pipeline
+
 permissions:
   contents: read
   packages: write
   id-token: write
-
-name: Secure-ci-cd
+  security-events: write # Required for uploading SARIF results
 
 on:
   push:
@@ -13,153 +12,162 @@ on:
   pull_request:
     branches: [ "main" ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-
-  build:
+  test-and-lint:
     runs-on: ubuntu-latest
-
     defaults:
       run:
-       working-directory: ./app
-       
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.25'
-
-    - name: Build
-      run: go build -v ./...
-      
-    # Run tests
-    - name: Test
-      run: go test -v ./...
-
-    - name: Run Go vet
-      run: go vet ./...
-
-    - name: Check Formatting
-      run: test -z "$(gofmt -l .)"
-      
-    # Run lint on the application
-    - name: Lint
-      uses: golangci/golangci-lint-action@v8
-      with:
-        version: latest
-        skip-cache: true
         working-directory: ./app
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-    # Run security Scans; Gitleaks to check for secrets, trivy for container image and dependency/ filesystem scanning
-    - name: Run Gitleaks
-      uses: gitleaks/gitleaks-action@v2
-      
-    # Filesystem scan
-    - name: Trivy FS Scan
-      uses: aquasecurity/trivy-action@v0.35.0
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        severity: 'CRITICAL,HIGH'
-        exit-code: '1'
+      - name: Set up Go
+        uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+        with:
+          go-version: '1.24'
+          cache-dependency-path: app/go.sum
 
-    # Log into Container Registry
-    - name: Login to GHCR
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-        
-    # Build image stage
-    - name: Generate Image Tag
-      run: |
-        SHORT_SHA=$(git rev-parse --short HEAD)
-        TIMESTAMP=$(date +%Y%m%d%H%M%S)
-    
-        IMAGE_TAG="${SHORT_SHA}-${TIMESTAMP}"
-    
-        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-        echo "IMAGE_NAME=ghcr.io/jed212/secure-go-api:$IMAGE_TAG" >> $GITHUB_ENV
-        
-    - name: Build Docker Image
-      run: docker build -t $IMAGE_NAME .
-      working-directory: .
+      - name: Build
+        run: go build -v ./...
 
+      - name: Test
+        run: go test -v ./...
 
-    # Docker Image scan configured to fail for Critical and High severity vulnerabilities
-    - name: Trivy Image Scan
-      uses: aquasecurity/trivy-action@0.35.0
-      with:
-        image-ref: ${{ env.IMAGE_NAME }}
-        severity: 'CRITICAL,HIGH'
-        exit-code: '1'
+      - name: Run Go vet
+        run: go vet ./...
 
-    # Generate and publish SBOM
-    - name: Generate SBOM
-      uses: aquasecurity/trivy-action@0.35.0
-      with:
-        image-ref: ${{ env.IMAGE_NAME }}
-        format: 'cyclonedx'
-        output: 'sbom.json'
+      - name: Check Formatting
+        run: test -z "$(gofmt -l .)"
 
-    - name: Upload SBOM Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: sbom
-        path: sbom.json
-        
-    # Push to ghcr
-    - name: Push Image
-      run: docker push ${{ env.IMAGE_NAME }}
-      working-directory: .
+      - name: Lint
+        uses: golangci/golangci-lint-action@ec5d18412c0ae07936cb1ee8a584982a84fe61b5 # v6.4.1
+        with:
+          version: latest
+          working-directory: ./app
 
-    # # Get the image digest and use to sign image
-    # - name: Get Image Digest
-    #   run: |
-    #     DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/${{ github.repository }}/secure-go-api:1.0)
-    #     echo "IMAGE=$DIGEST" >> $GITHUB_ENV
-        
-    # # Install Cosign
-    # - name: Install Cosign
-    #   uses: sigstore/cosign-installer@v4.1.1
-    
-    # # Sign Image
-    # - name: Sign Image
-    #   env:
-    #     COSIGN_EXPERIMENTAL: "true"
-    #   run: |
-    #     cosign sign --yes $IMAGE_NAME
-    
-    # Use ssh instead of https (to be optimized later)
-    - name: Setup SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.GITOPS_SSH_KEY }}" > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan github.com >> ~/.ssh/known_hosts
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-    # Update GitOps repo with new image
-    - name: Update GitOps Repo (CD Trigger)
-      env:
-        IMAGE: ${{ env.IMAGE_NAME }}
-        GITOPS_REPO: git@github.com:jed212/gitops-lab.git
-      working-directory: .
-      run: |
-        set -e
-    
-        echo "Cloning GitOps repo..."
-        git clone $GITOPS_REPO gitops
-    
-        cd gitops
-    
-        echo "Updating image in deployment..."
-        sed -i "s|image: .*|image: $IMAGE|" apps/secure-go-api/deployment.yaml
-    
-        echo "Configuring git..."
-        git config user.name "github-actions"
-        git config user.email "github-actions@github.com"
-    
-        echo "Committing changes..."
-        git add .
-        git commit -m "Update image to $IMAGE" || echo "No changes to commit"
-    
-        echo "Pushing changes..."
-        git push
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@646f89ef158782a20ca9489569b3621415059f33 # v2.3.7
+
+      - name: Trivy FS Scan (SARIF)
+        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c6d4b04 # v0.28.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@b56ba49b26e50535fa1e7f7db0f4f3b4c402803e # v3.28.10
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  build-and-push:
+    needs: [test-and-lint, security-scan]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      image_name: ${{ steps.meta.outputs.image_name }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Login to GHCR
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Image Meta
+        id: meta
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          IMAGE_TAG="${SHORT_SHA}-${TIMESTAMP}"
+          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/secure-go-api"
+          FULL_IMAGE_NAME="$IMAGE_NAME:$IMAGE_TAG"
+          echo "IMAGE_NAME=$FULL_IMAGE_NAME" >> $GITHUB_ENV
+          echo "image_name=$FULL_IMAGE_NAME" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857eed09 # v5.0.0
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_NAME }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c6d4b04 # v0.28.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+      - name: Generate SBOM
+        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c6d4b04 # v0.28.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}
+          format: 'cyclonedx'
+          output: 'sbom.json'
+
+      - name: Upload SBOM Artifact
+        uses: actions/upload-artifact@4ced5828ee500ad0a057799ef6b3d166747d3bb4 # v4.4.1
+        with:
+          name: sbom
+          path: sbom.json
+
+  sign-image:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      packages: write
+    steps:
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@d7d6bc7722e3eaa8355c5035f643360734458574 # v3.8.1
+
+      - name: Sign Image (Keyless)
+        run: |
+          cosign sign --yes ${{ needs.build-and-push.outputs.image_name }}
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+
+  deploy-update:
+    needs: [build-and-push, sign-image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GITOPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Update GitOps Repo
+        env:
+          IMAGE: ${{ needs.build-and-push.outputs.image_name }}
+          GITOPS_REPO: git@github.com:jed212/gitops-lab.git
+        run: |
+          git clone $GITOPS_REPO gitops
+          cd gitops
+          sed -i "s|image: .*|image: $IMAGE|" apps/secure-go-api/deployment.yaml
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "Update image to $IMAGE" || echo "No changes to commit"
+          git push

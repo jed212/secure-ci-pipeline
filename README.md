@@ -42,21 +42,28 @@ Artifact Publishing (SBOM)
 
 ## Security Features Implemented
 ✔ Code Quality Enforcement
-* golangci-lint
+* golangci-lint (Pinned to SHA)
 * go vet
 * formatting checks
 
 ✔ Secret Detection
 * Gitleaks used to prevent credential leakage in commits
 
-✔ Vulnerability Scanning
-* Trivy filesystem scan
+✔ Vulnerability Scanning & Reporting
+* Trivy filesystem scan with SARIF report upload to GitHub Security tab
 * Trivy container image scan
 * Blocking pipeline on HIGH and CRITICAL severity vulnerabilities
 
 ✔ Software Supply Chain Security
 * SBOM (Software Bill of Materials) generation using Trivy (CycloneDX format)
 * SBOM published as CI artifact
+* **Container Image Signing** using Cosign (Keyless signing with Sigstore/OIDC)
+* Action version pinning via commit SHAs
+
+✔ Hardened Containerization
+* Multi-stage builds
+* Distroless base image (minimizes attack surface)
+* Specific image digests for reproducibility
 
 ## CI Pipeline Features
 * Automated build and test on every push
