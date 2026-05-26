@@ -65,6 +65,9 @@ Artifact Publishing (SBOM)
 * Artifact generation (SBOM)
 * Reproducible container builds
 
+<img width="959" height="441" alt="image" src="https://github.com/user-attachments/assets/98b81d04-8369-4a09-879f-c036d95f7dc8" />
+
+
 ## SBOM (Software Bill of Materials)
 
 The pipeline generates an SBOM in CycloneDX format, providing full visibility into:
@@ -81,7 +84,7 @@ This enables:
 
 ## Project Structure
 ```
-secure-gitops-platform/
+secure-ci-pipeline/
 ├── app/
 │   ├── cmd/
 │   ├── internal/
