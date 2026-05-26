@@ -74,6 +74,7 @@ The pipeline generates an SBOM in CycloneDX format, providing full visibility in
 * application dependencies
 * transitive libraries
 * system packages inside container image
+SBOMs are generated and stored as pipeline artifacts
   
 This enables:
 * vulnerability tracking
